@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>[hidden]{display:none!important}</style>
+<title>And vs Or Regions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: an RL Tutoring worksheet on screen. White paper, serif questions, numbers in the margin,
+   parts separated by a rule, feedback in red pen like Ryan's marking. One light look on purpose. */
+:root{
+  --paper:#ffffff; --ink:#17191c; --muted:#646b73; --rule:#d5d9de; --axis:#a3aab2;
+  --shade:#9dbde3; --pen:#c62f2a; --ok:#1f8a4c; --ok-bg:#e9f6ee; --no-bg:#fbecea; --hover:#f4f6f8;
+  --card:var(--paper); --good:#1f5fb0; --bad:#8d949c;
+  --f-text:"STIX Two Text", "Times New Roman", serif;
+  --f-ui:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-text);font-size:18px;line-height:1.5;margin:0}
+.page{max-width:680px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}
+.sheethead{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-ui);font-size:11px;color:var(--muted)}
+.sheethead span:first-child{letter-spacing:.12em}
+/* Title set like the NESA HSC exam cover: Arial, regular weight, large (same face as typst-poc/cover.typ) */
+h1{font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;font-size:31px;font-weight:400;margin:16px 0 4px;line-height:1.15}
+.sub{margin:0 0 6px;color:var(--muted);font-size:16px}
+/* NESA cover block: boxed year + bold course line, all Arial like the HSC paper front page */
+.cover{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:16px;font-family:Arial, "Helvetica Neue", Helvetica, sans-serif}
+.cover b{border:1.4px solid var(--ink);padding:2px 7px;font-size:17px}
+.cover span{font-size:11.5px;font-weight:700;letter-spacing:.04em}
+.cover-sub{font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;font-size:14px}
+.part{margin-top:34px}
+.part h2{font-size:20px;font-weight:600;margin:0}
+.part .meta{font-size:15px;color:var(--muted);margin:0 0 8px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+.q{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:8px;padding-top:18px}
+.num{font-weight:600}
+.body{display:flex;flex-direction:column;gap:10px;min-width:0}
+.body p{margin:0}
+.m{white-space:nowrap}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.78em;line-height:1.05;margin:0 .1em}
+.frac>span:first-child{border-bottom:1px solid currentColor;padding:0 .15em}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}
+@media (min-width:620px){.opts{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.opt{appearance:none;border:0;background:none;padding:4px 2px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;color:var(--ink);font:inherit;border-radius:6px}
+.opt:hover{background:var(--hover)}
+.opts.done .opt{cursor:default;background:none}
+.opt svg{width:100%;height:auto;display:block}
+.lbl{font-size:16px;padding:0 7px;border:1.6px solid transparent;border-radius:999px}
+.opt.correct{background:var(--ok-bg)} .opt.wrong{background:var(--no-bg)}
+.opt.correct .lbl{border-color:var(--ok);color:var(--ok);font-weight:600}
+.opt.wrong .lbl::after,.yn button.wrong::after{content:" ✗";color:var(--pen)}
+.opt.correct.mine .lbl::after,.yn button.correct.mine::after{content:" ✓";color:var(--ok)}
+.fb{margin:0;font-style:italic;font-size:16px;color:var(--ink);padding-left:22px;position:relative}
+.fb::before{position:absolute;left:0;top:-2px;font-style:normal;font-size:19px;color:var(--pen)}
+.fb.good::before{content:"✓";color:var(--ok)} .fb.bad::before{content:"✗";color:var(--pen)}
+.yn{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.yn span{flex:1 1 260px;min-width:0}
+.yn button,.toggle button{appearance:none;border:0;background:none;font-family:var(--f-ui);font-size:15px;color:var(--ink);padding:4px 2px;cursor:pointer;text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:4px}
+.yn button:hover,.toggle button:hover{text-decoration-color:var(--ink)}
+.yn button.correct{border:1.6px solid var(--ok);color:var(--ok);background:var(--ok-bg);border-radius:999px;padding:2px 8px;text-decoration:none}
+.yn button.wrong{background:var(--no-bg);border-radius:999px;padding:2px 8px;text-decoration:none}
+.opt:focus-visible,.yn button:focus-visible,.toggle button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.play{display:grid;gap:12px;margin-top:6px}
+@media (min-width:620px){.play{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}}
+.play svg{width:100%;max-width:340px;height:auto;display:block;margin:0 auto;touch-action:none;cursor:crosshair}
+.toggle{display:flex;align-items:baseline;gap:12px;font-family:var(--f-ui);font-size:15px;color:var(--muted)}
+.toggle button[aria-pressed="true"]{font-weight:500;text-decoration-color:var(--ink);text-decoration-thickness:2px}
+.readout{display:flex;flex-direction:column;gap:8px;font-size:16px}
+.row{display:flex;justify-content:space-between;gap:10px}
+.row b{font-weight:400;white-space:nowrap;color:var(--muted)}
+.pass{color:var(--ok)} .fail{color:var(--pen)}
+.verdict{font-style:italic}
+.hint{font-family:var(--f-ui);font-size:13px;color:var(--muted);margin:0}
+.edges{display:flex;flex-direction:column;gap:4px;font-size:16px;margin-top:6px}
+.edges svg{width:44px;height:12px;vertical-align:middle;margin-right:8px}
+ol.steps{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.why{margin:14px 0 0;font-size:16px}
+.score{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="page">
+  <div class="sheethead"><span>RL TUTORING</span></div>
+  <div class="cover"><b>2026</b><span>MATHEMATICS EXTENSION 2 — COMPLEX NUMBERS</span></div>
+  <h1>Regions: “and” vs “or”</h1>
+  <p class="sub cover-sub">About five minutes. Tap an answer and it gets marked straight away.</p>
+
+  <div class="part" aria-labelledby="h-before">
+    <h2 id="h-before">Part 1 · Quick check</h2>
+    <p class="meta">Questions 1–3. Look closely at the edges and the dots, not just the shading.</p>
+    <div class="q" id="q1"><span class="num">1</span><div class="body">
+      <p>Which diagram shows <span class="m">|<i>z</i>| ≤ 2</span> <b>and</b> <span class="m">Re <i>z</i> ≥ 0</span>?</p>
+      <div class="opts"></div><p class="fb" hidden></p></div></div>
+    <div class="q" id="q2"><span class="num">2</span><div class="body">
+      <p>Which diagram shows <span class="m">|<i>z</i>| ≤ 2</span> <b>or</b> <span class="m">Re <i>z</i> ≥ 0</span>?</p>
+      <div class="opts"></div><p class="fb" hidden></p></div></div>
+    <div class="q" id="q3"><span class="num">3</span><div class="body">
+      <p>Points on and off the edges.</p>
+      <div class="yn" data-k="a"><span>(a) Is <span class="m"><i>z</i> = 3</span> in <span class="m">|<i>z</i>| ≤ 2</span> <b>and</b> <span class="m">Re <i>z</i> ≥ 0</span>?</span><button type="button" id="q3a-y" data-v="yes">Yes</button><button type="button" id="q3a-n" data-v="no">No</button></div>
+      <p class="fb" data-fb="a" hidden></p>
+      <div class="yn" data-k="b"><span>(b) Is <span class="m"><i>z</i> = 3</span> in <span class="m">|<i>z</i>| ≤ 2</span> <b>or</b> <span class="m">Re <i>z</i> ≥ 0</span>?</span><button type="button" id="q3b-y" data-v="yes">Yes</button><button type="button" id="q3b-n" data-v="no">No</button></div>
+      <p class="fb" data-fb="b" hidden></p>
+      <div class="yn" data-k="c"><span>(c) Take <span class="m"><i>z</i> = 2<i>i</i></span> instead. Is it in <span class="m">|<i>z</i>| ≤ 2</span> <b>and</b> <span class="m">Re <i>z</i> &gt; 0</span>?</span><button type="button" id="q3c-y" data-v="yes">Yes</button><button type="button" id="q3c-n" data-v="no">No</button></div>
+      <p class="fb" data-fb="c" hidden></p></div></div>
+  </div>
+
+  <div class="part" aria-labelledby="h-see">
+    <h2 id="h-see">Part 2 · See it</h2>
+    <p class="meta">Every condition is a test a point passes or fails.</p>
+    <p><b>And</b>: the point must pass <b>both</b> tests, so only the overlap is shaded. <b>Or</b>: passing <b>one</b> test is enough, so everything in either region is shaded.</p>
+    <div class="play">
+      <svg id="playsvg" viewBox="-4.2 -4.2 8.4 8.4" role="img" aria-label="Argand diagram with the disc of radius 2 and the right half-plane. Drag the point to test it."></svg>
+      <div class="readout">
+        <div class="toggle" role="group" aria-label="Join the two conditions with">Join with
+          <button type="button" id="t-and" aria-pressed="true">and</button>
+          <button type="button" id="t-or" aria-pressed="false">or</button>
+        </div>
+        <div class="row"><span>Test 1: <span class="m">|<i>z</i>| ≤ 2</span></span><b id="r1"></b></div>
+        <div class="row"><span>Test 2: <span class="m">Re <i>z</i> ≥ 0</span></span><b id="r2"></b></div>
+        <p class="verdict fb" id="rv"></p>
+        <p class="hint">Drag the point anywhere on the diagram.</p>
+      </div>
+    </div>
+    <div class="edges">
+      <span><svg viewBox="0 0 44 12" aria-hidden="true"><line x1="2" y1="6" x2="42" y2="6" stroke="currentColor" stroke-width="2"/></svg>solid: on the edge counts (≤, ≥)</span>
+      <span><svg viewBox="0 0 44 12" aria-hidden="true"><line x1="2" y1="6" x2="42" y2="6" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4"/></svg>dashed: on the edge does not count (&lt;, &gt;)</span>
+      <span><svg viewBox="0 0 44 12" aria-hidden="true"><line x1="2" y1="6" x2="42" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 5" opacity="0.55"/></svg>dotted: drawn first to set up an “and” region, not part of the answer</span>
+    </div>
+  </div>
+
+  <div class="part" aria-labelledby="h-after">
+    <h2 id="h-after">Part 3 · Try again</h2>
+    <p class="meta">Questions 4–6. Same again: shading, edges and dots.</p>
+    <div class="q" id="q4"><span class="num">4</span><div class="body">
+      <p>Which diagram shows <span class="m">|<i>z</i> − <i>i</i>| ≤ 2</span> <b>and</b> <span class="m">0 ≤ Arg <i>z</i> ≤ <span class="frac"><span>π</span><span>2</span></span></span>?</p>
+      <div class="opts"></div><p class="fb" hidden></p></div></div>
+    <div class="q" id="q5"><span class="num">5</span><div class="body">
+      <p>Which diagram shows <span class="m">|<i>z</i> − 1| ≤ 1</span> <b>or</b> <span class="m">Im <i>z</i> ≥ 1</span>?</p>
+      <div class="opts"></div><p class="fb" hidden></p></div></div>
+    <div class="q" id="q6"><span class="num">6</span><div class="body">
+      <p>Which diagram shows <span class="m">|<i>z</i> + 1| ≤ 3</span> <b>and</b> <span class="m"><span class="frac"><span>π</span><span>2</span></span> ≤ Arg <i>z</i> &lt; <span class="frac"><span>3π</span><span>4</span></span></span>? Look closely at the edges.</p>
+      <div class="opts"></div><p class="fb" hidden></p></div></div>
+  </div>
+
+  <div class="part" aria-labelledby="h-edges">
+    <h2 id="h-edges">Part 4 · Edges and corners</h2>
+    <p class="meta">Questions 7–10. Same shapes, different signs. Is the edge in or out?</p>
+    <div class="q" id="q7"><span class="num">7</span><div class="body">
+      <p>Points sitting exactly on an edge.</p>
+      <div class="yn" data-k="a"><span>(a) Is <span class="m"><i>z</i> = 2</span> in <span class="m">|<i>z</i>| &lt; 2</span> <b>or</b> <span class="m">Re <i>z</i> ≥ 1</span>?</span><button type="button" id="q7a-y" data-v="yes">Yes</button><button type="button" id="q7a-n" data-v="no">No</button></div>
+      <p class="fb" data-fb="a" hidden></p>
+      <div class="yn" data-k="b"><span>(b) Is <span class="m"><i>z</i> = −2</span> in <span class="m">|<i>z</i>| &lt; 2</span> <b>or</b> <span class="m">Re <i>z</i> ≥ 1</span>?</span><button type="button" id="q7b-y" data-v="yes">Yes</button><button type="button" id="q7b-n" data-v="no">No</button></div>
+      <p class="fb" data-fb="b" hidden></p>
+      <div class="yn" data-k="c"><span>(c) Is <span class="m"><i>z</i> = 1 + <i>i</i></span> in <span class="m">|<i>z</i> − 1| ≤ 1</span> <b>and</b> <span class="m">Im <i>z</i> &lt; 1</span>?</span><button type="button" id="q7c-y" data-v="yes">Yes</button><button type="button" id="q7c-n" data-v="no">No</button></div>
+      <p class="fb" data-fb="c" hidden></p></div></div>
+    <div class="q" id="q8"><span class="num">8</span><div class="body">
+      <p>Which diagram shows <span class="m">|<i>z</i> − 1| &lt; 1</span> <b>and</b> <span class="m">Re <i>z</i> ≥ 1</span>?</p>
+      <div class="opts"></div><p class="fb" hidden></p></div></div>
+    <div class="q" id="q9"><span class="num">9</span><div class="body">
+      <p>Which diagram shows <span class="m">|<i>z</i>| ≤ 2</span> <b>or</b> <span class="m">Im <i>z</i> &gt; 1</span>?</p>
+      <div class="opts"></div><p class="fb" hidden></p></div></div>
+    <div class="q" id="q10"><span class="num">10</span><div class="body">
+      <p>Which diagram shows <span class="m">|<i>z</i>| ≤ 2</span> <b>and</b> <span class="m">0 &lt; Arg <i>z</i> ≤ <span class="frac"><span>π</span><span>3</span></span></span>?</p>
+      <div class="opts"></div><p class="fb" hidden></p></div></div>
+  </div>
+
+  <div class="part" aria-labelledby="h-now">
+    <h2 id="h-now">Part 5 · Now one on paper</h2>
+    <p class="meta">The method for any region question, in this order.</p>
+    <ol class="steps">
+      <li><b>And:</b> draw <b>every</b> boundary lightly in dotted lines first: the whole circle, the whole line, both whole rays. <b>Or:</b> sketch each region straight away, solid for ≤ or ≥ and dashed for &lt; or &gt;, because anything in either region counts. An Arg ray starts at the origin, and the origin itself is left out (open dot).</li>
+      <li>For each condition, test a point (like 0 or 1) to see which side passes.</li>
+      <li><b>And</b>: shade only where every test passes. <b>Or</b>: shade everywhere at least one test passes.</li>
+      <li><b>And</b>: go over <b>only the edges of your shaded region</b>, solid for ≤ or ≥ and dashed for &lt; or &gt;. The rest of each curve stays dotted. Then check each corner: a filled dot only if the corner passes <b>every</b> condition (both edges solid), an open dot otherwise.</li>
+    </ol>
+    <p class="why"><b>Why dotted first for “and”?</b> A solid line says “every point on this line is in the answer”. With <b>and</b>, a point on the circle only counts if it <b>also</b> passes the other condition. Start with solid lines and you have already claimed the whole circle passes both, which is usually false. Dotted first, then check which parts satisfy <b>both</b> conditions, and only go over those. With <b>or</b> there is nothing to rule out, so you can sketch in full straight away.</p>
+    <p class="why"><b>Try it:</b> sketch the region where <span class="m">|<i>z</i> − <i>i</i>| ≤ 5</span> <b>and</b> <span class="m"><span class="frac"><span>π</span><span>4</span></span> &lt; Arg <i>z</i> ≤ <span class="frac"><span>π</span><span>2</span></span></span> (Girraween 2021 Q11(d), 2 marks). If it was on your homework, redo it there.</p>
+    <p class="why">Your score: before <span class="score" id="s-before">–/3</span>, after <span class="score" id="s-after">–/3</span>, edges and corners <span class="score" id="s-edges">–/4</span>. Screenshot this and send it to your tutor with your sketch.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const PI = Math.PI, NS = "http://www.w3.org/2000/svg";
+  let uid = 0;
+
+  // ---- shapes, in maths coordinates (y up); drawn inside a group flipped with scale(1,-1)
+  const disc  = (cx, cy, r, strict=false) => ({t:"disc", cx, cy, r, strict});
+  const half  = (axis, op, v, strict=false) => ({t:"half", axis, op, v, strict});
+  const wedge = (a1, a2, s1=false, s2=false) => ({t:"wedge", a1, a2, s1, s2});
+
+  function fillShape(s){
+    if (s.t === "disc") return `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}"/>`;
+    if (s.t === "half"){
+      const big = 10;
+      if (s.axis === "re") return s.op === ">=" ? `<rect x="${s.v}" y="${-big}" width="${big}" height="${2*big}"/>` : `<rect x="${-big}" y="${-big}" width="${s.v+big}" height="${2*big}"/>`;
+      return s.op === ">=" ? `<rect x="${-big}" y="${s.v}" width="${2*big}" height="${big}"/>` : `<rect x="${-big}" y="${-big}" width="${2*big}" height="${s.v+big}"/>`;
+    }
+    const R = 9, n = 24, pts = ["0,0"];
+    for (let k = 0; k <= n; k++){ const a = s.a1 + (s.a2 - s.a1) * k / n; pts.push(`${(R*Math.cos(a)).toFixed(3)},${(R*Math.sin(a)).toFixed(3)}`); }
+    return `<polygon points="${pts.join(" ")}"/>`;
+  }
+  // Step 1 of Ryan's method: every boundary drawn in full as a light dotted construction line
+  function constructionSVG(reg){
+    const st = `style="stroke:var(--axis)" stroke-width="0.045" fill="none" stroke-linecap="round" stroke-dasharray="0.01 0.12"`;
+    return reg.s.map(s => {
+      if (s.t === "disc") return `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" ${st}/>`;
+      if (s.t === "half") return s.axis === "re" ? `<line x1="${s.v}" y1="-6" x2="${s.v}" y2="6" ${st}/>` : `<line x1="-6" y1="${s.v}" x2="6" y2="${s.v}" ${st}/>`;
+      const R = 9, ray = a => `<line x1="0" y1="0" x2="${(R*Math.cos(a)).toFixed(3)}" y2="${(R*Math.sin(a)).toFixed(3)}" ${st}/>`;
+      return ray(s.a1) + ray(s.a2);
+    }).join("");
+  }
+  // Is point p in shape s? "closed" counts the edge, "open" does not
+  function contains(s, p, mode){
+    const e = 1e-6, closed = mode === "closed";
+    if (s.t === "disc"){ const d = Math.hypot(p[0]-s.cx, p[1]-s.cy); return closed ? d <= s.r + e : d < s.r - e; }
+    if (s.t === "half"){
+      const c = s.axis === "re" ? p[0] : p[1];
+      if (s.op === ">=") return closed ? c >= s.v - e : c > s.v + e;
+      return closed ? c <= s.v + e : c < s.v - e;
+    }
+    const r = Math.hypot(p[0], p[1]);
+    if (r < 1e-9) return closed;
+    const a = Math.atan2(p[1], p[0]);
+    return closed ? (a >= s.a1 - e && a <= s.a2 + e) : (a > s.a1 + e && a < s.a2 - e);
+  }
+  // Each boundary curve as sample points, with its own solid/dashed style
+  function curves(s){
+    if (s.t === "disc"){ const pts = []; for (let k = 0; k <= 720; k++){ const a = 2*PI*k/720; pts.push([s.cx + s.r*Math.cos(a), s.cy + s.r*Math.sin(a)]); } return [{pts, strict:s.strict}]; }
+    if (s.t === "half"){ const pts = []; for (let k = 0; k <= 1200; k++){ const t = -6 + 12*k/1200; pts.push(s.axis === "re" ? [s.v, t] : [t, s.v]); } return [{pts, strict:s.strict}]; }
+    const ray = (a, strict) => { const pts = []; for (let k = 0; k <= 900; k++){ const t = 9*k/900; pts.push([t*Math.cos(a), t*Math.sin(a)]); } return {pts, strict}; };
+    return [ray(s.a1, s.s1), ray(s.a2, s.s2)];
+  }
+  // Step 2: go over only the parts of each curve that are edges of the final region,
+  // then put a dot on every corner: filled if the corner point is in the region, open if it is left out
+  function finalEdgesSVG(reg){
+    let out = "", ends = [], cid = 0;
+    const line = (pts, strict) => `<polyline points="${pts.map(p => p[0].toFixed(3) + "," + p[1].toFixed(3)).join(" ")}" style="stroke:var(--ink)" stroke-width="0.08" fill="none" stroke-linejoin="round"${strict ? ' stroke-dasharray="0.25 0.18"' : ""}/>`;
+    reg.s.forEach((s, k) => {
+      const others = reg.s.filter((_, j) => j !== k);
+      const keep = p => reg.op === "one" ? true
+        : reg.op === "and" ? others.every(o => contains(o, p, "closed"))
+        : others.every(o => !contains(o, p, "open"));
+      curves(s).forEach(c => {
+        const id = ++cid, flags = c.pts.map(keep);
+        let order = [...Array(c.pts.length).keys()];
+        if (s.t === "disc"){
+          // a circle has no start: begin the walk at a dropped point so no edge is split at the seam
+          const f = flags.indexOf(false);
+          if (f === -1){ out += line(c.pts, c.strict); return; }
+          const n = c.pts.length - 1; order = [...Array(n).keys()].map(i => (f + i) % n);
+        }
+        let run = [];
+        const flush = () => {
+          if (run.length > 1){ out += line(run, c.strict); ends.push({p: run[0], strict: c.strict, id}, {p: run[run.length-1], strict: c.strict, id}); }
+          run = [];
+        };
+        order.forEach(i => { if (flags[i]) run.push(c.pts[i]); else flush(); });
+        flush();
+      });
+    });
+    const inView = p => Math.abs(p[0]) < 4.1 && Math.abs(p[1]) < 4.1;
+    const atOrigin = p => Math.hypot(p[0], p[1]) < 0.06;
+    const used = new Set();
+    ends.forEach((e, i) => {
+      if (used.has(i) || !inView(e.p) || atOrigin(e.p)) return;
+      let mate = -1, best = 0.12;
+      ends.forEach((f, j) => { if (j !== i && !used.has(j) && f.id !== e.id){ const d = Math.hypot(f.p[0]-e.p[0], f.p[1]-e.p[1]); if (d < best){ best = d; mate = j; } } });
+      used.add(i);
+      let inside = !e.strict, p = e.p;
+      if (mate >= 0){
+        const f = ends[mate]; used.add(mate);
+        inside = reg.op === "or" ? (!e.strict || !f.strict) : (!e.strict && !f.strict);
+        p = [(e.p[0] + f.p[0]) / 2, (e.p[1] + f.p[1]) / 2];
+      }
+      out += `<circle cx="${p[0].toFixed(3)}" cy="${p[1].toFixed(3)}" r="0.13" stroke-width="0.06" style="fill:${inside ? "var(--ink)" : "var(--paper)"};stroke:var(--ink)"/>`;
+    });
+    // An Arg region never includes the origin: open dot, unless another region covers it
+    const hasWedge = reg.s.some(s => s.t === "wedge");
+    const covered = reg.op === "or" && reg.s.some(s => s.t !== "wedge" && contains(s, [0,0], "open"));
+    if (hasWedge && !covered) out += `<circle style="fill:var(--paper);stroke:var(--ink)" cx="0" cy="0" r="0.13" stroke-width="0.06"/>`;
+    return out;
+  }
+  // "Or": nothing to rule out, so each boundary goes down in full straight away (solid for ≤, dashed for <)
+  function fullEdgesSVG(reg){
+    let out = "";
+    reg.s.forEach(s => curves(s).forEach(c => {
+      out += `<polyline points="${c.pts.map(p => p[0].toFixed(3) + "," + p[1].toFixed(3)).join(" ")}" style="stroke:var(--ink)" stroke-width="0.08" fill="none"${c.strict ? ' stroke-dasharray="0.25 0.18"' : ""}/>`;
+    }));
+    const hasWedge = reg.s.some(s => s.t === "wedge");
+    const covered = reg.s.some(s => s.t !== "wedge" && contains(s, [0,0], "open"));
+    if (hasWedge && !covered) out += `<circle style="fill:var(--paper);stroke:var(--ink)" cx="0" cy="0" r="0.13" stroke-width="0.06"/>`;
+    return out;
+  }
+  function axes(){
+    return `<line style="stroke:var(--axis)" x1="-4.2" y1="0" x2="4.2" y2="0" stroke-width="0.04"/>` +
+           `<line style="stroke:var(--axis)" x1="0" y1="-4.2" x2="0" y2="4.2" stroke-width="0.04"/>` +
+           [-2,2].map(v => `<line style="stroke:var(--axis)" x1="${v}" y1="-0.1" x2="${v}" y2="0.1" stroke-width="0.04"/><line style="stroke:var(--axis)" x1="-0.1" y1="${v}" x2="0.1" y2="${v}" stroke-width="0.04"/>`).join("");
+  }
+  function labels(){
+    const t = (x, y, s) => `<text style="fill:var(--muted)" x="${x}" y="${y}" font-size="0.48" font-family="STIX Two Text, serif">${s}</text>`;
+    return t(3.45, -0.25, "Re") + t(0.18, -3.75, "Im") + t(1.85, 0.6, "2") + t(-2.35, 0.6, "−2") + t(0.2, -1.85, "2") + t(0.2, 2.3, "−2");
+  }
+  // Each shape as a convex polygon, listed anticlockwise, so "and" can be drawn as one clipped polygon
+  function poly(s){
+    const B = 10;
+    if (s.t === "disc"){ const out = []; for (let k = 0; k < 96; k++){ const a = 2*PI*k/96; out.push([s.cx + s.r*Math.cos(a), s.cy + s.r*Math.sin(a)]); } return out; }
+    if (s.t === "half"){
+      if (s.axis === "re") return s.op === ">=" ? [[s.v,-B],[B,-B],[B,B],[s.v,B]] : [[-B,-B],[s.v,-B],[s.v,B],[-B,B]];
+      return s.op === ">=" ? [[-B,s.v],[B,s.v],[B,B],[-B,B]] : [[-B,-B],[B,-B],[B,s.v],[-B,s.v]];
+    }
+    const R = 9, out = [[0,0]];
+    for (let k = 0; k <= 24; k++){ const a = s.a1 + (s.a2 - s.a1)*k/24; out.push([R*Math.cos(a), R*Math.sin(a)]); }
+    return out;
+  }
+  // Sutherland–Hodgman: keep the part of `subject` inside the convex polygon `clipper`
+  function clip(subject, clipper){
+    let out = subject;
+    const inside = (p, a, b) => (b[0]-a[0])*(p[1]-a[1]) - (b[1]-a[1])*(p[0]-a[0]) >= -1e-9;
+    const cross = (p, q, a, b) => {
+      const A1 = q[1]-p[1], B1 = p[0]-q[0], C1 = A1*p[0] + B1*p[1];
+      const A2 = b[1]-a[1], B2 = a[0]-b[0], C2 = A2*a[0] + B2*a[1];
+      const det = A1*B2 - A2*B1;
+      return [(B2*C1 - B1*C2)/det, (A1*C2 - A2*C1)/det];
+    };
+    for (let i = 0; i < clipper.length && out.length; i++){
+      const a = clipper[i], b = clipper[(i+1) % clipper.length], input = out; out = [];
+      for (let j = 0; j < input.length; j++){
+        const p = input[j], q = input[(j+1) % input.length];
+        const pin = inside(p, a, b), qin = inside(q, a, b);
+        if (pin && qin) out.push(q);
+        else if (pin && !qin) out.push(cross(p, q, a, b));
+        else if (!pin && qin){ out.push(cross(p, q, a, b)); out.push(q); }
+      }
+    }
+    return out;
+  }
+  // region = {op:"and"|"or"|"one", s:[...]}
+  function regionSVG(reg){
+    const id = "c" + (++uid);
+    let shade = "";
+    if (reg.op === "one") shade = fillShape(reg.s[0]);
+    else if (reg.op === "or") shade = reg.s.map(fillShape).join("");
+    else shade = `<polygon points="${clip(poly(reg.s[0]), poly(reg.s[1])).map(p => p[0].toFixed(3) + "," + p[1].toFixed(3)).join(" ")}"/>`;
+    return `<g transform="scale(1,-1)"><g style="fill:var(--shade)" opacity="0.55">${shade}</g>${axes()}${reg.op === "or" ? fullEdgesSVG(reg) : constructionSVG(reg) + finalEdgesSVG(reg)}</g>${labels()}`;
+  }
+  function svgEl(inner, label){
+    return `<svg viewBox="-4.2 -4.2 8.4 8.4" role="img" aria-label="${label}">${inner}</svg>`;
+  }
+
+  // ---- the six questions
+  const D2 = disc(0,0,2), D2s = disc(0,0,2,true), RE = half("re", ">=", 0), REs = half("re", ">=", 0, true);
+  const Di = disc(0,1,2), Dis = disc(0,1,2,true), W1 = wedge(0, PI/2), W1s = wedge(0, PI/2, true, true), W2 = wedge(PI/2, PI);
+  const D1 = disc(1,0,1), D1s = disc(1,0,1,true), IM1 = half("im", ">=", 1), IM1s = half("im", ">=", 1, true), IM1L = half("im", "<=", 1);
+  const D3 = disc(-1,0,3), W6 = wedge(PI/2, 3*PI/4, false, true), W6x = wedge(PI/2, 3*PI/4, true, false), W6c = wedge(PI/2, 3*PI/4, false, false);
+  const D1c = disc(1,0,1), D1o = disc(1,0,1,true), RE1 = half("re", ">=", 1), RE1s = half("re", ">=", 1, true);
+  const W3 = (s1, s2) => wedge(0, PI/3, s1, s2);
+  const Q = {
+    q1:{phase:"before", ans:1, opts:[{op:"and",s:[D2s,RE]},{op:"and",s:[D2,RE]},{op:"and",s:[D2,REs]},{op:"or",s:[D2,RE]}],
+        good:"Right. Only the overlap, and both conditions allow equality (≤ and ≥), so both edges are solid and the corners at ±2i are filled dots.",
+        bad:"Not quite. It is the overlap, and both conditions allow equality, so both edges are solid with filled corners: B. A has the arc dashed (that would be |z| < 2), C has the axis dashed (Re z > 0), D is “or”."},
+    q2:{phase:"before", ans:3, opts:[{op:"and",s:[D2,RE]},{op:"or",s:[D2,REs]},{op:"or",s:[D2s,RE]},{op:"or",s:[D2,RE]}],
+        good:"Right. With “or” everything in either region is shaded, and both edges are solid because both conditions include equality.",
+        bad:"Not quite. “Or” shades the whole disc plus the whole right half-plane, with both edges solid (≤ and ≥): D. B has the axis dashed, C has the arc dashed, A is “and”."},
+    q4:{phase:"after", ans:0, opts:[{op:"and",s:[Di,W1]},{op:"and",s:[Di,W1s]},{op:"and",s:[Dis,W1]},{op:"and",s:[Di,W2]}],
+        good:"Right. Every condition has ≤, so every edge is solid and the corners are filled. The origin stays an open dot: Arg 0 is undefined.",
+        bad:"Not quite. Every condition has ≤, so every edge is solid: A. B has dashed rays (that would be 0 < Arg z < π/2), C has a dashed arc (|z − i| < 2), D is the wrong quadrant."},
+    q5:{phase:"after", ans:2, opts:[{op:"or",s:[D1s,IM1]},{op:"or",s:[D1,IM1s]},{op:"or",s:[D1,IM1]},{op:"or",s:[D1,IM1L]}],
+        good:"Right. “Or”: the whole disc centred at 1 plus everything on or above Im z = 1, and both edges are solid.",
+        bad:"Not quite. Both conditions include equality, so both edges are solid: C. A has the circle dashed, B has the line dashed, D shades below the line."},
+    q6:{phase:"after", ans:1, opts:[{op:"and",s:[D3,W6x]},{op:"and",s:[D3,W6]},{op:"and",s:[D3,W6c]},{op:"or",s:[D3,W6]}],
+        good:"Right. The ray at π/2 is solid (≤). The ray at 3π/4 is dashed (<), so where it meets the circle the corner is an open dot.",
+        bad:"Not quite. π/2 ≤ Arg z keeps the ray at π/2 (solid). Arg z < 3π/4 leaves out the ray at 3π/4 (dashed, with an open dot where it meets the circle): B. A swaps them, C has both solid, D is “or”."},
+    q8:{phase:"edges", ans:1, opts:[{op:"and",s:[D1c,RE1s]},{op:"and",s:[D1o,RE1]},{op:"and",s:[D1c,RE1]},{op:"and",s:[D1o,RE1s]}],
+        good:"Right. |z − 1| < 1 leaves the circle out (dashed) and Re z ≥ 1 keeps the line (solid). Both corners sit on the dashed circle, so they are open dots.",
+        bad:"Not quite. The circle is dashed (< 1) and the line Re z = 1 is solid (≥ 1). The corners are on the circle, which is left out, so they are open: B."},
+    q9:{phase:"edges", ans:0, opts:[{op:"or",s:[D2,IM1s]},{op:"or",s:[D2,IM1]},{op:"or",s:[D2s,IM1s]},{op:"and",s:[D2,IM1s]}],
+        good:"Right. “Or”: the whole disc (solid, ≤) plus everything above Im z = 1 (dashed, >). Points on that dashed line inside the circle still count, because they pass |z| ≤ 2.",
+        bad:"Not quite. The circle is solid (≤) and the line Im z = 1 is dashed (>), and with “or” both regions are shaded in full: A. B has the line solid, C has the circle dashed, D is “and”."},
+    q10:{phase:"edges", ans:2, opts:[{op:"and",s:[D2,W3(false,true)]},{op:"and",s:[D2,W3(true,true)]},{op:"and",s:[D2,W3(true,false)]},{op:"and",s:[D2,W3(false,false)]}],
+        good:"Right. 0 < Arg z leaves out the positive real axis (dashed, open corner at z = 2). Arg z ≤ π/3 keeps the ray at π/3 (solid, filled corner). The origin is always open.",
+        bad:"Not quite. 0 < Arg z makes the ray at 0 dashed with an open corner at z = 2, and Arg z ≤ π/3 makes the ray at π/3 solid with a filled corner: C."}
+  };
+  const score = {before:{right:0, done:0, of:3}, after:{right:0, done:0, of:3}, edges:{right:0, done:0, of:4}};
+  function updateScore(){
+    Object.entries(score).forEach(([k, v]) => {
+      const el = document.getElementById("s-" + k);
+      if (el) el.textContent = (v.done === v.of ? v.right : "–") + "/" + v.of;
+    });
+  }
+  function record(phase, ok){
+    score[phase].done++; if (ok) score[phase].right++;
+    updateScore();
+  }
+  Object.entries(Q).forEach(([key, q]) => {
+    const box = document.querySelector(`#${key} .opts`), fb = document.querySelector(`#${key} .fb`);
+    q.opts.forEach((reg, i) => {
+      const L = "ABCD"[i];
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "opt"; b.id = `${key}-${L}`;
+      b.innerHTML = svgEl(regionSVG(reg), `Option ${L}`) + `<span class="lbl">(${L})</span>`;
+      b.addEventListener("click", () => {
+        if (box.classList.contains("done")) return;
+        box.classList.add("done");
+        const ok = i === q.ans;
+        b.classList.add(ok ? "correct" : "wrong");
+        if (!ok) box.children[q.ans].classList.add("correct");
+        fb.textContent = ok ? q.good : q.bad;
+        fb.className = "fb " + (ok ? "good" : "bad");
+        fb.hidden = false; b.classList.add("mine");
+        record(q.phase, ok);
+      });
+      box.appendChild(b);
+    });
+  });
+  // yes/no questions: each counts once, and is right only if every part is right
+  const YN = {
+    q3:{phase:"before", parts:{
+      a:{ans:"no", good:"Right. |3| = 3, which fails |z| ≤ 2. With “and”, one failed test puts it outside.", bad:"Not quite. |3| = 3 fails |z| ≤ 2, and with “and” one failed test is enough to be outside."},
+      b:{ans:"yes", good:"Right. Re 3 = 3 passes Re z ≥ 0, and with “or” one pass is enough.", bad:"Not quite. Re 3 = 3 passes Re z ≥ 0, and with “or” one pass is enough to be inside."},
+      c:{ans:"no", good:"Right. |2i| = 2 passes |z| ≤ 2, but Re(2i) = 0 is not > 0. A point on a dashed edge is left out.", bad:"Not quite. Re(2i) = 0, and 0 > 0 is false, so it fails the second test. With “and” that puts it outside: it sits on a dashed edge."}}},
+    q7:{phase:"edges", parts:{
+      a:{ans:"yes", good:"Right. |2| = 2 fails |z| < 2, but Re 2 = 2 passes Re z ≥ 1, and with “or” one pass is enough.", bad:"Not quite. It fails |z| < 2 (2 is not less than 2) but passes Re z ≥ 1, and with “or” that is enough: yes."},
+      b:{ans:"no", good:"Right. |−2| = 2 is not < 2, and Re(−2) = −2 is not ≥ 1. It fails both, so even “or” leaves it out.", bad:"Not quite. |−2| = 2 is not < 2 and Re(−2) = −2 is not ≥ 1. It fails both tests, so even “or” leaves it out."},
+      c:{ans:"no", good:"Right. |i| = 1 passes |z − 1| ≤ 1 (exactly on the circle), but Im z = 1 is not < 1. With “and”, one failed test puts it out.", bad:"Not quite. It passes |z − 1| ≤ 1 (exactly on the circle), but Im z = 1 fails Im z < 1, so with “and” it is out."}}}
+  };
+  Object.entries(YN).forEach(([key, q]) => {
+    const done = {};
+    document.querySelectorAll(`#${key} .yn`).forEach(row => {
+      const k = row.dataset.k, part = q.parts[k], fb = document.querySelector(`#${key} [data-fb="${k}"]`);
+      row.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
+        if (row.dataset.done) return;
+        row.dataset.done = "1";
+        const ok = btn.dataset.v === part.ans;
+        btn.classList.add(ok ? "correct" : "wrong"); btn.classList.add("mine");
+        if (!ok) row.querySelector(`[data-v="${part.ans}"]`).classList.add("correct");
+        fb.textContent = ok ? part.good : part.bad;
+        fb.className = "fb " + (ok ? "good" : "bad"); fb.hidden = false;
+        done[k] = ok;
+        if (Object.keys(done).length === Object.keys(q.parts).length) record(q.phase, Object.values(done).every(Boolean));
+      }));
+    });
+  });
+
+  // ---- the playground
+  const svg = document.getElementById("playsvg");
+  let mode = "and", P = {x:-1.2, y:1.6};
+  function draw(){
+    const reg = {op: mode, s:[D2, RE]};
+    const inA = Math.hypot(P.x, P.y) <= 2 + 1e-9, inB = P.x >= -1e-9;
+    const inside = mode === "and" ? (inA && inB) : (inA || inB);
+    svg.innerHTML = regionSVG(reg) +
+      `<g transform="scale(1,-1)"><circle id="pt" cx="${P.x}" cy="${P.y}" r="0.26" style="fill:${inside ? "var(--good)" : "var(--bad)"};stroke:var(--card)" stroke-width="0.07"/></g>` +
+      `<text style="fill:var(--ink)" x="${(P.x + 0.32).toFixed(2)}" y="${(-P.y - 0.3).toFixed(2)}" font-size="0.5" font-family="STIX Two Text, serif" font-style="italic">z</text>`;
+    const mod = Math.hypot(P.x, P.y).toFixed(1), re = P.x.toFixed(1);
+    document.getElementById("r1").innerHTML = inA ? `passes <span class="pass">✓</span> (|z| = ${mod})` : `fails <span class="fail">✗</span> (|z| = ${mod})`;
+    document.getElementById("r2").innerHTML = inB ? `passes <span class="pass">✓</span> (Re z = ${re})` : `fails <span class="fail">✗</span> (Re z = ${re})`;
+    const v = document.getElementById("rv");
+    const why = mode === "and" ? (inside ? "passes both tests" : "needs both tests, and it failed one") : (inside ? "passes at least one test" : "fails both tests");
+    v.textContent = (inside ? "In the region: " : "Not in the region: ") + why + ".";
+    v.className = "verdict fb " + (inside ? "good" : "bad");
+  }
+  function setMode(m){
+    mode = m;
+    document.getElementById("t-and").setAttribute("aria-pressed", m === "and");
+    document.getElementById("t-or").setAttribute("aria-pressed", m === "or");
+    draw();
+  }
+  document.getElementById("t-and").addEventListener("click", () => setMode("and"));
+  document.getElementById("t-or").addEventListener("click", () => setMode("or"));
+  function toMath(evt){
+    const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return {x: Math.max(-4, Math.min(4, p.x)), y: Math.max(-4, Math.min(4, -p.y))};
+  }
+  let dragging = false;
+  svg.addEventListener("pointerdown", e => { dragging = true; try { svg.setPointerCapture(e.pointerId); } catch(_){} P = toMath(e); draw(); });
+  svg.addEventListener("pointermove", e => { if (dragging){ P = toMath(e); draw(); } });
+  svg.addEventListener("pointerup", () => { dragging = false; });
+  svg.addEventListener("pointercancel", () => { dragging = false; });
+  draw(); updateScore();
+})();
+</script>
